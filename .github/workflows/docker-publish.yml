@@ -9,10 +9,10 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-  AWS_REGION: us-east-1 # ajuste conforme necessário
+  AWS_REGION: us-east-1
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  LAMBDA_FUNCTION_NAME: stack-food-lambda-function # ajuste conforme necessário
+  LAMBDA_FUNCTION_NAME: stack-food-lambda-function
 
 jobs:
   build_and_publish:
