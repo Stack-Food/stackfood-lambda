@@ -17,12 +17,12 @@ jobs:
 
       - name: Validate branch name
         run: |
-          BRANCH_NAME="${GITHUB_REF##*/}"
+          BRANCH_NAME="${GITHUB_HEAD_REF}"
           if [[ ! "$BRANCH_NAME" =~ ^(feature|develop|bugfix|hotfix)/ ]]; then
             echo "Branch name '$BRANCH_NAME' is not valid. It should start with 'feature/', 'develop/', 'bugfix/', or 'hotfix/'."
             exit 1
           fi
-
+          
       - name: Run tests
         run: |
           # Adicione aqui os comandos para rodar seus testes.
