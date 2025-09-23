@@ -1,0 +1,42 @@
+name: Validate Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature-*'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Validate branch name
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF}"
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|develop|bugfix|hotfix)/ ]]; then
+            echo "Branch name '$BRANCH_NAME' is not valid. It should start with 'feature/', 'develop/', 'bugfix/', or 'hotfix/'."
+            exit 1
+          fi
+          
+      - name: Run tests
+        run: |
+          # Adicione aqui os comandos para rodar seus testes.
+          echo "Running tests..."
+          # Exemplo: npm test ou pytest
+
+      - name: Lint Code
+        run: |
+          # Adicione aqui os comandos para linting do código.
+          echo "Linting code..."
+          # Exemplo: eslint . ou flake8 .
+
+      - name: Check for merge to main/master
+        if: github.base_ref == 'main' || github.base_ref == 'master'
+        run: |
+          echo "Merging directly to 'main' or 'master' is not allowed. Please use a feature branch."
+          exit 1
