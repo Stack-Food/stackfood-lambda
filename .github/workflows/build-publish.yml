@@ -74,7 +74,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./src/Services/StackFood.Lambda/Dockerfile
+          file: ./src/StackFood.Lambda/Dockerfile
           push: true
           tags: ${{ steps.lambda-tagger.outputs.tags }}
           labels: ${{ steps.lambda-meta.outputs.labels }}
