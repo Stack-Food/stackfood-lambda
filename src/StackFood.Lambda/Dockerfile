@@ -1,38 +1,22 @@
 FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+USER app
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 ARG configuration=Release
 WORKDIR /src
-
-# Copy csproj and restore
 COPY ["src/StackFood.Lambda/StackFood.Lambda.csproj", "src/StackFood.Lambda/"]
-RUN dotnet restore "src/StackFood.Lambda/StackFood.Lambda.csproj" \
-    -r linux-musl-x64 \
-    /p:PublishReadyToRun=true
-
-# Copy source
+RUN dotnet restore "src/StackFood.Lambda/StackFood.Lambda.csproj" /p:PublishReadyToRun=false
 COPY . .
 WORKDIR "/src/src/StackFood.Lambda"
+RUN dotnet build "StackFood.Lambda.csproj" -c $configuration -o /app/build
 
-# Publish
-RUN dotnet publish "StackFood.Lambda.csproj" \
-    -c $configuration \
-    -o /app/publish \
-    -r linux-musl-x64 \
-    --self-contained false \
-    /p:UseAppHost=false \
-    /p:PublishReadyToRun=true \
-    /p:PublishTrimmed=false \
-    --no-restore
+FROM build AS publish
+ARG configuration=Release
+WORKDIR /src/src/StackFood.Lambda
+RUN dotnet publish "StackFood.Lambda.csproj" -c $configuration -o /app/publish /p:UseAppHost=false --os linux --arch x64 /t:PublishContainer
 
 FROM base AS final
 WORKDIR /app
-
-# Instalar dependências necessárias para .NET no Alpine
-RUN apk add --no-cache \
-    icu-libs \
-    tzdata
-
-COPY --from=build /app/publish .
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "StackFood.Lambda.dll"]

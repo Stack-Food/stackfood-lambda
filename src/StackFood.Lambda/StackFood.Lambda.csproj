@@ -9,7 +9,7 @@
   
   <!-- Configurações para Alpine Linux -->
   <RuntimeIdentifier>linux-musl-x64</RuntimeIdentifier>
-  <PublishReadyToRun>true</PublishReadyToRun>
+  <PublishReadyToRun>false</PublishReadyToRun>
   <PublishSingleFile>false</PublishSingleFile>
   
   <!-- Otimizações de tamanho -->
