@@ -13,6 +13,7 @@ RUN dotnet build "StackFood.Lambda.csproj" -c $configuration -o /app/build
 
 FROM build AS publish
 ARG configuration=Release
+WORKDIR /src/src/StackFood.Lambda
 RUN dotnet publish "StackFood.Lambda.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
