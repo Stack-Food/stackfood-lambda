@@ -13,7 +13,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 jobs:
   build_lambda_docker_image:
-    name: Build API Docker image (PR)
+    name: Build Lambda Docker image (PR)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
