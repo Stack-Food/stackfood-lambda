@@ -2,6 +2,12 @@
 {
     public interface ICognitoService
     {
-        Task<bool> VerifyCpfExist(string cpf);
+        Task<string> CreateUserAsync(string cpf, string email, string name);
+
+        /// <summary>
+        /// Autentica um cliente no Cognito a partir do CPF.
+        /// Retorna o token JWT caso seja encontrado.
+        /// </summary>
+        Task<string> AuthenticateAsync(string? cpf, string? password = null);
     }
 }
