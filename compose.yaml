@@ -1,0 +1,11 @@
+
+services:
+  stackfoodlambda:
+    image: stackfoodlambda
+    build:
+      context: .
+      dockerfile: src/StackFood.Lambda/Dockerfile
+      args:
+        - configuration=Debug
+    volumes:
+      - ~/.vsdbg:/remote_debugger:rw

@@ -37,7 +37,6 @@ namespace StackFood.Lambda
             });
 
             services.AddScoped<ICognitoService, CognitoService>();
-            services.AddScoped<ICustomerService, CustomerService>();
 
             return services.BuildServiceProvider();
         }

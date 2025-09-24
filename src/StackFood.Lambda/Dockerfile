@@ -1,13 +1,22 @@
-FROM public.ecr.aws/lambda/dotnet:8
+FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine AS base
+WORKDIR /app
 
-WORKDIR /var/task
+USER app
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+ARG configuration=Release
+WORKDIR /src
+COPY ["src/StackFood.Lambda/StackFood.Lambda.csproj", "src/StackFood.Lambda/"]
+RUN dotnet restore "src/StackFood.Lambda/StackFood.Lambda.csproj" /p:PublishReadyToRun=false
+COPY . .
+WORKDIR "/src/src/StackFood.Lambda"
+RUN dotnet build "StackFood.Lambda.csproj" -c $configuration -o /app/build
 
-# This COPY command copies the .NET Lambda project's build artifacts from the host machine into the image. 
-# The source of the COPY should match where the .NET Lambda project publishes its build artifacts. If the Lambda function is being built 
-# with the AWS .NET Lambda Tooling, the `--docker-host-build-output-dir` switch controls where the .NET Lambda project
-# will be built. The .NET Lambda project templates default to having `--docker-host-build-output-dir`
-# set in the aws-lambda-tools-defaults.json file to "bin/Release/lambda-publish".
-#
-# Alternatively Docker multi-stage build could be used to build the .NET Lambda project inside the image.
-# For more information on this approach checkout the project's README.md file.
-COPY "bin/Release/lambda-publish"  .
+FROM build AS publish
+ARG configuration=Release
+WORKDIR /src/src/StackFood.Lambda
+RUN dotnet publish "StackFood.Lambda.csproj" -c $configuration -o /app/publish /p:UseAppHost=false --os linux --arch x64 /t:PublishContainer
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "StackFood.Lambda.dll"]
