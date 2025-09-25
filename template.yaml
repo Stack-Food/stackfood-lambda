@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for StackFoodLambda with Cognito access and API Gateway integration.
+
+Resources:
+  # Função Lambda
+  StackFoodLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: StackFoodLambda
+      PackageType: Image
+      Code:
+        ImageUri: public.ecr.aws/lambda/dotnet:8
+      MemorySize: 256
+      Timeout: 30
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        USER_POOL_ID: !Ref MyUserPool
+        CLIENT_ID: ""  # Preencha conforme necessário
+        LOG_LEVEL: "info"
+        ASPNETCORE_ENVIRONMENT: "Production"
+
+  # Papel de execução da Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LabRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaCognitoAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:ListUsers
+                  - cognito-idp:AdminGetUser
+                Resource: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyUserPool}
+
+  # User Pool do Cognito
+  MyUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: MyUserPool
+
+  # API Gateway
+  MyApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: MyApi
+
+  MyApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt MyApi.RootResourceId
+      RestApiId: !Ref MyApi
+      PathPart: myresource
+
+  MyApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: POST
+      ResourceId: !Ref MyApiResource
+      RestApiId: !Ref MyApi
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StackFoodLambda.Arn}/invocations
+      MethodResponses:
+        - StatusCode: 200
+
+  # Permissão para o API Gateway invocar a função Lambda
+  ApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref StackFoodLambda
+      Principal: apigateway.amazonaws.com
+
+Outputs:
+  ApiUrl:
+    Description: "URL do endpoint da API"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/prod/myresource"
