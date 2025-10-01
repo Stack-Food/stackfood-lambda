@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <AWSProjectType>Lambda</AWSProjectType>
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+	  <!-- Configurações para Alpine Linux -->
+	  <RuntimeIdentifier>linux-musl-x64</RuntimeIdentifier>
+	  <PublishReadyToRun>false</PublishReadyToRun>
+	  <PublishSingleFile>false</PublishSingleFile>
+
+	  <!-- Otimizações de tamanho -->
+	  <PublishTrimmed>false</PublishTrimmed>
+	  <!-- Cuidado com Lambda -->
+	  <TrimMode>copyused</TrimMode>
+	  <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+
+	  <!-- Otimizações de performance -->
+	  <TieredCompilation>true</TieredCompilation>
+	  <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+	  <InvariantGlobalization>true</InvariantGlobalization>
+	  <!-- Reduz tamanho -->
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="appsettings.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="2.7.1" />
+    <PackageReference Include="Amazon.Lambda.Core" Version="2.7.0" />
+    <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.4" />
+    <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="4.0.3.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+  </ItemGroup>
+</Project>

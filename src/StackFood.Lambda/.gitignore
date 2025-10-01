@@ -1,0 +1,63 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.app
+*.so
+*.dylib
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+
+# Lambda test tool output
+.testtool/
+*.events.json
+*.test-result.json
+
+# AWS credential files / tokens
+.aws/
+*.awsprofile
+*.awscredentials
+
+# Environment/config
+.env
+.env.*
+*.local.json
+secrets.json
+
+# Logs
+*.log
+logs/
+*.tlog
+*.log.*
+
+# Test Results
+TestResults/
+coverage.*
+*.coverage
+*.coveragexml
+
+# Visual Studio Code
+.history/
+
+# JetBrains Rider
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Deployment packaging
+*.zip
+*.publish/
+
+# Others
+*.ncrunchproject
+*.orig
+_ReSharper.*
