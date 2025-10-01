@@ -27,7 +27,7 @@ jobs:
       - name: Compactar Lambda
         run: |
           cd publish
-          zip -r ../stackfood-lambda.zip .
+          zip -r ../stackfood-auth.zip .
           cd ..
 
       - name: Configurar credenciais AWS
@@ -39,11 +39,11 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       - name: Subir artefato para S3
-        run: aws s3 cp stackfood-lambda.zip s3://stackfood-lambda-artifacts/
+        run: aws s3 cp stackfood-auth.zip s3://stackfood-lambda-artifacts/
 
       - name: Atualizar Lambda Function
         run: |
           aws lambda update-function-code \
-            --function-name StackFoodLambda \
+            --function-name stackfood-auth \
             --s3-bucket stackfood-lambda-artifacts \
-            --s3-key stackfood-lambda.zip
+            --s3-key stackfood-auth.zip
