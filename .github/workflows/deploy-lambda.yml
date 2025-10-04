@@ -139,8 +139,3 @@ jobs:
           echo "🏷️ Lambda Version: ${{ steps.publish_version.outputs.lambda_version }}"
           echo "🔗 Commit: ${{ github.sha }}"
           echo "📝 Mensagem: ${{ github.event.head_commit.message }}"
-
-      - name: Criar tag no repositório
-        run: |
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
