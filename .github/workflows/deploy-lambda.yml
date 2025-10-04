@@ -10,6 +10,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      LAMBDA_NAME: ${{ vars.LAMBDA_NAME }}   # ?? vem das variáveis do repo
+      BUCKET_NAME: ${{ vars.BUCKET_NAME }}   # ?? vem das variáveis do repo
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
@@ -28,7 +32,7 @@ jobs:
       - name: Compactar Lambda
         run: |
           cd publish
-          zip -r ../stackfood-auth.zip .
+          zip -r ../${{ env.LAMBDA_NAME }}.zip .
           cd ..
 
       - name: Configurar credenciais AWS
@@ -40,11 +44,11 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       - name: Subir artefato para S3
-        run: aws s3 cp stackfood-auth.zip s3://stackfood-lambda-artifacts/
+        run: aws s3 cp ${{ env.LAMBDA_NAME }}.zip s3://${{ env.BUCKET_NAME }}/
 
       - name: Atualizar Lambda Function
         run: |
           aws lambda update-function-code \
-            --function-name stackfood-auth \
-            --s3-bucket stackfood-lambda-artifacts \
-            --s3-key stackfood-auth.zip
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --s3-bucket ${{ env.BUCKET_NAME }} \
+            --s3-key ${{ env.LAMBDA_NAME }}.zip
