@@ -18,7 +18,7 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necessário para o versionamento semântico
+          fetch-depth: 0
 
       - name: Gerar versão semântica
         id: version
@@ -65,14 +65,80 @@ jobs:
             --s3-bucket ${{ env.BUCKET_NAME }} \
             --s3-key ${{ env.LAMBDA_NAME }}-v${{ steps.version.outputs.version }}.zip
 
+      - name: Aguardar função ficar disponível
+        run: |
+          echo "⏳ Aguardando a função Lambda ficar disponível..."
+          max_attempts=30
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Tentativa $attempt de $max_attempts..."
+            
+            status=$(aws lambda get-function \
+              --function-name ${{ env.LAMBDA_NAME }} \
+              --query 'Configuration.State' \
+              --output text)
+            
+            last_update_status=$(aws lambda get-function \
+              --function-name ${{ env.LAMBDA_NAME }} \
+              --query 'Configuration.LastUpdateStatus' \
+              --output text)
+            
+            echo "Status atual: $status"
+            echo "Status da última atualização: $last_update_status"
+            
+            if [ "$status" = "Active" ] && [ "$last_update_status" = "Successful" ]; then
+              echo "✅ Função Lambda está disponível!"
+              break
+            fi
+            
+            if [ "$last_update_status" = "Failed" ]; then
+              echo "❌ Atualização da função falhou!"
+              exit 1
+            fi
+            
+            if [ $attempt -eq $max_attempts ]; then
+              echo "❌ Timeout aguardando a função ficar disponível"
+              exit 1
+            fi
+            
+            echo "⏳ Aguardando 10 segundos antes da próxima verificação..."
+            sleep 10
+            attempt=$((attempt + 1))
+          done
+
       - name: Publicar versão da Lambda
         id: publish_version
         run: |
+          echo "📦 Publicando versão da Lambda..."
           VERSION_ARN=$(aws lambda publish-version \
             --function-name ${{ env.LAMBDA_NAME }} \
             --description "v${{ steps.version.outputs.version }} - ${{ github.event.head_commit.message }}" \
             --query 'Version' --output text)
           echo "lambda_version=$VERSION_ARN" >> $GITHUB_OUTPUT
+          echo "✅ Versão $VERSION_ARN publicada com sucesso!"
+
+      - name: Criar alias (opcional)
+        run: |
+          echo "🏷️ Criando/atualizando alias..."
+          aws lambda update-alias \
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --name LATEST-DEPLOY \
+            --function-version ${{ steps.publish_version.outputs.lambda_version }} \
+            --description "Última versão deployada via GitHub Actions - v${{ steps.version.outputs.version }}" || \
+          aws lambda create-alias \
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --name LATEST-DEPLOY \
+            --function-version ${{ steps.publish_version.outputs.lambda_version }} \
+            --description "Última versão deployada via GitHub Actions - v${{ steps.version.outputs.version }}"
+
+      - name: Mostrar informações do deploy
+        run: |
+          echo "🎉 Deploy realizado com sucesso!"
+          echo "📦 Versão Semântica: v${{ steps.version.outputs.version }}"
+          echo "🏷️ Lambda Version: ${{ steps.publish_version.outputs.lambda_version }}"
+          echo "🔗 Commit: ${{ github.sha }}"
+          echo "📝 Mensagem: ${{ github.event.head_commit.message }}"
 
       - name: Criar tag no repositório
         run: |
