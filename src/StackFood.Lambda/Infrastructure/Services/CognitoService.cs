@@ -3,6 +3,7 @@ using Amazon.CognitoIdentityProvider.Model;
 using StackFood.Lambda.Application.Interfaces;
 using Amazon.Lambda.Core; // para logs
 using System.Text.Json;
+using System.Runtime;
 
 namespace StackFood.Lambda.Infrastructure.Services
 {
@@ -21,11 +22,11 @@ namespace StackFood.Lambda.Infrastructure.Services
 
         public async Task<string> AuthenticateAsync(string cpf, string? password = null)
         {
-            _logger?.LogInformation("=== Iniciando AuthenticateAsync ===");
-            _logger?.LogInformation($"CPF recebido: {cpf}");
-            _logger?.LogInformation($"UserPoolId: {_settings.UserPoolId}");
-            _logger?.LogInformation($"ClientId: {_settings.ClientId}");
-            _logger?.LogInformation($"Password usando default? {password == null}");
+                _logger?.LogInformation("=== Iniciando AuthenticateAsync ===");
+                _logger?.LogInformation($"CPF recebido: {cpf}");
+                _logger?.LogInformation($"UserPoolId: {_settings.UserPoolId}");
+                _logger?.LogInformation($"ClientId: {_settings.ClientId}");
+                _logger?.LogInformation($"Password usando default? {password == null}");
 
             try
             {
@@ -48,8 +49,9 @@ namespace StackFood.Lambda.Infrastructure.Services
                     _logger?.LogWarning("Usuário não encontrado no Cognito.");
                     throw new UnauthorizedAccessException("Usuário não encontrado no Cognito");
                 }
-
+                var pass = _settings.DefaultPassword;
                 _logger?.LogInformation($"Usuário encontrado. Status: {user.UserStatus}");
+                _logger?.LogInformation($"Password DO LEMOS? {pass}");
 
                 // Criar request de autenticação
                 var request = new InitiateAuthRequest
@@ -59,7 +61,7 @@ namespace StackFood.Lambda.Infrastructure.Services
                     AuthParameters = new Dictionary<string, string>
                     {
                         { "USERNAME", cpf },
-                        { "PASSWORD", password ?? _settings.DefaultPassword }
+                        { "PASSWORD", _settings.DefaultPassword }
                     }
                 };
 
@@ -140,7 +142,7 @@ namespace StackFood.Lambda.Infrastructure.Services
                         new() { Name = "name", Value = name },
                         new() { Name = "email_verified", Value = "true" }
                     ],
-                    TemporaryPassword = "123#Temporary",
+                    TemporaryPassword = _settings.DefaultPassword,
                     MessageAction = MessageActionType.SUPPRESS
                 };
 
