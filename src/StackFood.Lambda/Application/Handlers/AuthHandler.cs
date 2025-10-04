@@ -24,9 +24,6 @@ namespace StackFood.Lambda.Application.Handlers
             try
             {
                 // Log geral da requisição
-                context.Logger.LogInformation($"Path recebido: {request.Path}");
-                context.Logger.LogInformation($"HTTP Method: {request.HttpMethod}");
-                context.Logger.LogInformation($"isBase64Encoded: {request.IsBase64Encoded}");
                 context.Logger.LogInformation($"Headers: {JsonConvert.SerializeObject(request.Headers)}");
 
                 // Decodificar body se vier em base64
@@ -34,7 +31,6 @@ namespace StackFood.Lambda.Application.Handlers
                     ? Encoding.UTF8.GetString(Convert.FromBase64String(request.Body))
                     : request.Body;
 
-                context.Logger.LogInformation($"Body recebido (raw): {request.Body}");
                 context.Logger.LogInformation($"Body decodificado: {requestBody}");
 
                 if (string.IsNullOrWhiteSpace(requestBody))
@@ -51,17 +47,15 @@ namespace StackFood.Lambda.Application.Handlers
                 }
                 catch (Exception jsonEx)
                 {
-                    context.Logger.LogError($"Erro ao desserializar JSON: {jsonEx.Message}");
                     return BuildResponse(HttpStatusCode.BadRequest, new { message = "JSON inválido." });
                 }
 
                 if (body == null || string.IsNullOrWhiteSpace(body.CPF))
                 {
-                    context.Logger.LogWarning($"Campo CPF ausente ou inválido. Body desserializado: {JsonConvert.SerializeObject(body)}");
                     return BuildResponse(HttpStatusCode.BadRequest, new { message = "Campo CPF é obrigatório." });
                 }
 
-                context.Logger.LogInformation($"Tentando autenticar usuário com CPF: {body.CPF}");
+                context.Logger.LogInformation($"Tentando autenticar usuário RODRIGUEZ {body.CPF}");
 
                 var token = await _cognitoService.AuthenticateAsync(body.CPF);
 
