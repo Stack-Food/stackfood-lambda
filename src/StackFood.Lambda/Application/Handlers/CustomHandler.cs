@@ -21,26 +21,53 @@ namespace StackFood.Lambda.Application.Handlers
         {
             try
             {
+                context.Logger.LogInformation("Iniciando a criação do cliente.");
+
+                // Logando a entrada do corpo da requisição
+                context.Logger.LogInformation($"Corpo da requisição: {request.Body}");
+
                 var body = JsonConvert.DeserializeObject<Customer>(request.Body ?? "{}");
 
-                if (body is null || string.IsNullOrWhiteSpace(body.CPF) ||
+                if (body is null)
+                {
+                    context.Logger.LogWarning("O corpo da requisição está vazio ou malformado.");
+                    return BuildResponse(HttpStatusCode.BadRequest, new { message = "Corpo da requisição inválido." });
+                }
+
+                // Verificando e logando se algum campo obrigatório está faltando
+                if (string.IsNullOrWhiteSpace(body.CPF) ||
                     string.IsNullOrWhiteSpace(body.Email) ||
                     string.IsNullOrWhiteSpace(body.Name))
                 {
+                    context.Logger.LogWarning($"Dados obrigatórios faltando: CPF: {body.CPF}, Email: {body.Email}, Nome: {body.Name}");
                     return BuildResponse(HttpStatusCode.BadRequest, new { message = "CPF, Email e Nome são obrigatórios." });
                 }
 
+                context.Logger.LogInformation("Tentando criar o cliente no Cognito.");
+
                 await _cognitoService.CreateUserAsync(body.CPF, body.Email, body.Name);
+
+                context.Logger.LogInformation("Cliente criado com sucesso!");
 
                 return BuildResponse(HttpStatusCode.Created, new { message = "Cliente criado com sucesso!" });
             }
-            catch (UsernameExistsException)
+            catch (UsernameExistsException ex)
             {
+                // Logando o erro específico de conflito de usuário
+                context.Logger.LogError($"Erro ao criar cliente: Usuário já existe no Cognito. {ex.Message}");
                 return BuildResponse(HttpStatusCode.Conflict, new { message = "Usuário já existe no Cognito." });
             }
             catch (Exception ex)
             {
-                context.Logger.LogError($"Erro ao criar cliente: {ex.Message}");
+                // Logando qualquer outro erro geral
+                context.Logger.LogError($"Erro inesperado ao criar cliente: {ex.Message}");
+
+                // Se for um erro relacionado ao Cognito, logamos um erro específico
+                if (ex.Message.Contains("User pool") || ex.Message.Contains("does not exist"))
+                {
+                    context.Logger.LogError("Erro específico: O pool de usuários do Cognito não existe ou não está configurado corretamente.");
+                }
+
                 return BuildResponse(HttpStatusCode.InternalServerError, new { message = "Erro interno no servidor." });
             }
         }

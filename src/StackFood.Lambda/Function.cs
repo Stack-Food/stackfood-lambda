@@ -26,7 +26,19 @@ namespace StackFood.Lambda
         /// </summary>
         public Task<APIGatewayProxyResponse> FunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
         {
-            // Ajuste os paths conforme suas rotas no API Gateway
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            if (string.IsNullOrEmpty(request.Path))
+            {
+                context.Logger.LogError("Path is null or empty");
+                return Task.FromResult(new APIGatewayProxyResponse
+                {
+                    StatusCode = 400,
+                    Body = "Invalid request: path is missing",
+                });
+            }
+
             return request.Path.ToLower() switch
             {
                 "/auth" => _authHandler.HandleAuthAsync(request, context),
@@ -39,5 +51,6 @@ namespace StackFood.Lambda
                 })
             };
         }
+
     }
 }
