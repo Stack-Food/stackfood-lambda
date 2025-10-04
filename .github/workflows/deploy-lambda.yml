@@ -11,19 +11,31 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      LAMBDA_NAME: ${{ vars.LAMBDA_NAME }}   # ?? vem das vari�veis do repo
-      BUCKET_NAME: ${{ vars.BUCKET_NAME }}   # ?? vem das vari�veis do repo
+      LAMBDA_NAME: ${{ vars.LAMBDA_NAME }}
+      BUCKET_NAME: ${{ vars.BUCKET_NAME }}
 
     steps:
-      - name: Checkout c�digo
+      - name: Checkout código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necessário para o versionamento semântico
+
+      - name: Gerar versão semântica
+        id: version
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          version_format: "${major}.${minor}.${patch}"
+          bump_each_commit: true
 
       - name: Configurar .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
-      - name: Restaurar depend�ncias
+      - name: Restaurar dependências
         run: dotnet restore
 
       - name: Buildar projeto
@@ -32,7 +44,7 @@ jobs:
       - name: Compactar Lambda
         run: |
           cd publish
-          zip -r ../${{ env.LAMBDA_NAME }}.zip .
+          zip -r ../${{ env.LAMBDA_NAME }}-v${{ steps.version.outputs.version }}.zip .
           cd ..
 
       - name: Configurar credenciais AWS
@@ -44,11 +56,27 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       - name: Subir artefato para S3
-        run: aws s3 cp ${{ env.LAMBDA_NAME }}.zip s3://${{ env.BUCKET_NAME }}/
+        run: aws s3 cp ${{ env.LAMBDA_NAME }}-v${{ steps.version.outputs.version }}.zip s3://${{ env.BUCKET_NAME }}/
 
       - name: Atualizar Lambda Function
         run: |
           aws lambda update-function-code \
             --function-name ${{ env.LAMBDA_NAME }} \
             --s3-bucket ${{ env.BUCKET_NAME }} \
-            --s3-key ${{ env.LAMBDA_NAME }}.zip
+            --s3-key ${{ env.LAMBDA_NAME }}-v${{ steps.version.outputs.version }}.zip
+
+      - name: Publicar versão da Lambda
+        id: publish_version
+        run: |
+          VERSION_ARN=$(aws lambda publish-version \
+            --function-name ${{ env.LAMBDA_NAME }} \
+            --description "v${{ steps.version.outputs.version }} - ${{ github.event.head_commit.message }}" \
+            --query 'Version' --output text)
+          echo "lambda_version=$VERSION_ARN" >> $GITHUB_OUTPUT
+
+      - name: Criar tag no repositório
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
