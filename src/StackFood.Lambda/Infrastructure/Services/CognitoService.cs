@@ -94,7 +94,7 @@ namespace StackFood.Lambda.Infrastructure.Services
 
         public async Task<string> AuthenticateGuestAsync()
         {
-            context.Logger.LogInformation("=== Iniciando AuthenticateGuestAsync ===");
+            _logger?.LogInformation("=== Iniciando AuthenticateGuestAsync ===");
 
             try
             {
@@ -109,12 +109,12 @@ namespace StackFood.Lambda.Infrastructure.Services
                     }
                 };
 
-                context.Logger.LogInformation($"Autenticando usuário convidado: {_settings.GuestUsername}");
+                _logger?.LogInformation($"Autenticando usuário convidado: {_settings.GuestUsername}");
 
                 var response = await _cognitoClient.InitiateAuthAsync(request);
 
-                context.Logger.LogInformation("Autenticação do convidado concluída com sucesso.");
-                context.Logger.LogInformation($"Token convidado (IdToken length): {response.AuthenticationResult?.IdToken?.Length}");
+                _logger?.LogInformation("Autenticação do convidado concluída com sucesso.");
+                _logger?.LogInformation($"Token convidado (IdToken length): {response.AuthenticationResult?.IdToken?.Length}");
 
                 return response.AuthenticationResult.IdToken;
             }
@@ -127,8 +127,8 @@ namespace StackFood.Lambda.Infrastructure.Services
 
         public async Task<string> CreateUserAsync(string cpf, string email, string name)
         {
-            context.Logger.LogInformation("=== Iniciando CreateUserAsync ===");
-            context.Logger.LogInformation($"Criando usuário: CPF={cpf}, Email={email}, Nome={name}");
+            _logger?.LogInformation("=== Iniciando CreateUserAsync ===");
+            _logger?.LogInformation($"Criando usuário: CPF={cpf}, Email={email}, Nome={name}");
 
             try
             {
@@ -148,7 +148,7 @@ namespace StackFood.Lambda.Infrastructure.Services
 
                 await _cognitoClient.AdminCreateUserAsync(request);
 
-                context.Logger.LogInformation("Usuário criado. Definindo senha permanente...");
+                _logger?.LogInformation("Usuário criado. Definindo senha permanente...");
 
                 await _cognitoClient.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
                 {
@@ -158,7 +158,7 @@ namespace StackFood.Lambda.Infrastructure.Services
                     Permanent = true
                 });
 
-                context.Logger.LogInformation("Senha permanente definida com sucesso.");
+                _logger?.LogInformation("Senha permanente definida com sucesso.");
                 return cpf;
             }
             catch (UsernameExistsException ex)
