@@ -142,7 +142,7 @@ namespace StackFood.Lambda.Infrastructure.Services
                         new() { Name = "name", Value = name },
                         new() { Name = "email_verified", Value = "true" }
                     ],
-                    TemporaryPassword = "123#Temporary",
+                    TemporaryPassword = _settings.DefaultPassword,
                     MessageAction = MessageActionType.SUPPRESS
                 };
 
