@@ -57,7 +57,7 @@ namespace StackFood.Lambda.Application.Handlers
 
                 context.Logger.LogInformation($"Tentando autenticar usuário RODRIGUEZ {body.CPF}");
 
-                var token = await _cognitoService.AuthenticateAsync(body.CPF);
+                var token = await _cognitoService.AuthenticateAsync(body.CPF, context);
 
                 context.Logger.LogInformation("Autenticação concluída com sucesso.");
 

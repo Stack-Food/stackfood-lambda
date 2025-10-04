@@ -20,24 +20,24 @@ namespace StackFood.Lambda.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<string> AuthenticateAsync(string cpf, string? password = null)
+        public async Task<string> AuthenticateAsync(string cpf,  ILambdaContext context, string? password = null)
         {
-                _logger?.LogInformation("=== Iniciando AuthenticateAsync ===");
-                _logger?.LogInformation($"CPF recebido: {cpf}");
-                _logger?.LogInformation($"UserPoolId: {_settings.UserPoolId}");
-                _logger?.LogInformation($"ClientId: {_settings.ClientId}");
-                _logger?.LogInformation($"Password usando default? {password == null}");
+                context.Logger.LogInformation("=== Iniciando AuthenticateAsync ===");
+            context.Logger.LogInformation($"CPF recebido: {cpf}");
+                context.Logger.LogInformation($"UserPoolId: {_settings.UserPoolId}");
+                context.Logger.LogInformation($"ClientId: {_settings.ClientId}");
+                context.Logger.LogInformation($"Password usando default? {password == null}");
 
             try
             {
                 if (string.IsNullOrEmpty(cpf))
                 {
-                    _logger?.LogInformation("CPF vazio, autenticando como convidado...");
+                    context.Logger.LogInformation("CPF vazio, autenticando como convidado...");
                     return await AuthenticateGuestAsync();
                 }
 
                 // Buscar usuário
-                _logger?.LogInformation("Buscando usuário no Cognito...");
+                context.Logger.LogInformation("Buscando usuário no Cognito...");
                 var user = await _cognitoClient.AdminGetUserAsync(new AdminGetUserRequest
                 {
                     UserPoolId = _settings.UserPoolId,
@@ -50,8 +50,8 @@ namespace StackFood.Lambda.Infrastructure.Services
                     throw new UnauthorizedAccessException("Usuário não encontrado no Cognito");
                 }
                 var pass = _settings.DefaultPassword;
-                _logger?.LogInformation($"Usuário encontrado. Status: {user.UserStatus}");
-                _logger?.LogInformation($"Password DO LEMOS? {pass}");
+                context.Logger.LogInformation($"Usuário encontrado. Status: {user.UserStatus}");
+                context.Logger.LogInformation($"Password DO LEMOS? {pass}");
 
                 // Criar request de autenticação
                 var request = new InitiateAuthRequest
@@ -65,12 +65,12 @@ namespace StackFood.Lambda.Infrastructure.Services
                     }
                 };
 
-                _logger?.LogInformation("Enviando InitiateAuthAsync para Cognito...");
+                context.Logger.LogInformation("Enviando InitiateAuthAsync para Cognito...");
 
                 var response = await _cognitoClient.InitiateAuthAsync(request);
 
-                _logger?.LogInformation("Autenticação Cognito concluída com sucesso.");
-                _logger?.LogInformation($"Token recebido (IdToken length): {response.AuthenticationResult?.IdToken?.Length}");
+                context.Logger.LogInformation("Autenticação Cognito concluída com sucesso.");
+                context.Logger.LogInformation($"Token recebido (IdToken length): {response.AuthenticationResult?.IdToken?.Length}");
 
                 return response.AuthenticationResult.IdToken;
             }
@@ -94,7 +94,7 @@ namespace StackFood.Lambda.Infrastructure.Services
 
         public async Task<string> AuthenticateGuestAsync()
         {
-            _logger?.LogInformation("=== Iniciando AuthenticateGuestAsync ===");
+            context.Logger.LogInformation("=== Iniciando AuthenticateGuestAsync ===");
 
             try
             {
@@ -109,12 +109,12 @@ namespace StackFood.Lambda.Infrastructure.Services
                     }
                 };
 
-                _logger?.LogInformation($"Autenticando usuário convidado: {_settings.GuestUsername}");
+                context.Logger.LogInformation($"Autenticando usuário convidado: {_settings.GuestUsername}");
 
                 var response = await _cognitoClient.InitiateAuthAsync(request);
 
-                _logger?.LogInformation("Autenticação do convidado concluída com sucesso.");
-                _logger?.LogInformation($"Token convidado (IdToken length): {response.AuthenticationResult?.IdToken?.Length}");
+                context.Logger.LogInformation("Autenticação do convidado concluída com sucesso.");
+                context.Logger.LogInformation($"Token convidado (IdToken length): {response.AuthenticationResult?.IdToken?.Length}");
 
                 return response.AuthenticationResult.IdToken;
             }
@@ -127,8 +127,8 @@ namespace StackFood.Lambda.Infrastructure.Services
 
         public async Task<string> CreateUserAsync(string cpf, string email, string name)
         {
-            _logger?.LogInformation("=== Iniciando CreateUserAsync ===");
-            _logger?.LogInformation($"Criando usuário: CPF={cpf}, Email={email}, Nome={name}");
+            context.Logger.LogInformation("=== Iniciando CreateUserAsync ===");
+            context.Logger.LogInformation($"Criando usuário: CPF={cpf}, Email={email}, Nome={name}");
 
             try
             {
@@ -148,7 +148,7 @@ namespace StackFood.Lambda.Infrastructure.Services
 
                 await _cognitoClient.AdminCreateUserAsync(request);
 
-                _logger?.LogInformation("Usuário criado. Definindo senha permanente...");
+                context.Logger.LogInformation("Usuário criado. Definindo senha permanente...");
 
                 await _cognitoClient.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
                 {
@@ -158,7 +158,7 @@ namespace StackFood.Lambda.Infrastructure.Services
                     Permanent = true
                 });
 
-                _logger?.LogInformation("Senha permanente definida com sucesso.");
+                context.Logger.LogInformation("Senha permanente definida com sucesso.");
                 return cpf;
             }
             catch (UsernameExistsException ex)
