@@ -60,8 +60,8 @@ namespace StackFood.Lambda.Infrastructure.Services
                     AuthFlow = AuthFlowType.USER_PASSWORD_AUTH,
                     AuthParameters = new Dictionary<string, string>
                     {
-                        { "USERNAME", cpf },
-                        { "PASSWORD", _settings.DefaultPassword }
+                        { "USERNAME", cpf }, //147917892
+                        { "PASSWORD", _settings.DefaultPassword }//Stackfood#123
                     }
                 };
 
