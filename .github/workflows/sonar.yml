@@ -45,9 +45,9 @@ jobs:
             - name: Build and analyze
               shell: powershell
               run: |
-                  ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"${{ secrets.SONAR_PROJECT_KEY }}" /o:"stack-food" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" 
+                  ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"$env:SONAR_PROJECT_KEY" /o:"stack-food" /d:sonar.token="$env:SONAR_TOKEN" /d:sonar.host.url="https://sonarcloud.io"
                   dotnet build
-                  ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+                  ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
               env:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-                  SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+                  SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
